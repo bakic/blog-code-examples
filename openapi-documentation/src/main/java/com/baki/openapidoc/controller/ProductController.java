@@ -1,17 +1,37 @@
 package com.baki.openapidoc.controller;
 
+import com.baki.openapidoc.exception.NotFoundException;
+import com.baki.openapidoc.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/products")
+@RequiredArgsConstructor
 public class ProductController {
 
+    private final ProductService productService;
+
     @GetMapping("/{id}")
+    @Operation(summary = "Get product by id",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The product",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Product.class))),
+                    @ApiResponse(responseCode = "404", description = "Product not found",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = NotFoundException.class))),
+                    @ApiResponse(responseCode = "400", description = "Invalid ID",
+                            content = @Content)}
+    )
     public Product getProductById(@PathVariable Long id) {
-        // Retrieve product from database or any other data source
-        // For demonstration, let's create a dummy product
-        Product product = new Product(id, "Sample Product", 10.0);
-        return product;
+
+        return productService.getProduct(id)
+                .orElseThrow(() -> new NotFoundException("Product not found"));
     }
 
     @PostMapping
